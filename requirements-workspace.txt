@@ -1,0 +1,6 @@
+# 本文件是工作区导航说明，不是真实依赖清单。
+# 真实依赖请到各仓库内部：
+#   repos/upstream/lerobot/requirements*.txt 或 pyproject.toml
+#   repos/upstream/XLeRobot/
+#   repos/local/robocrew_client_agent/
+# 本工作区不安装顶层依赖，避免 pip / uv 误判整个工作区为单一项目。

@@ -1,0 +1,14 @@
+[
+  {
+    "tool_name": "Place_coke_can_on_shelf_right_arm",
+    "tool_description": "使用右臂把桌面上的红色可口可乐空罐放到机器人置物架上。",
+    "task_prompt": "Pick up the red Coca-Cola can from the table and place it on the robot shelf.",
+    "server_address": "127.0.0.1:8080",
+    "policy_name": "your_huggingface_id/your_policy_name",
+    "policy_type": "act",
+    "policy_device": "cuda",
+    "arm_port": "/dev/arm_right",
+    "execution_time": 30,
+    "active": false
+  }
+]

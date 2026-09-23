@@ -1,0 +1,140 @@
+{
+    "codebase_version": "v3.0",
+    "fps": 20,
+    "features": {
+        "action": {
+            "dtype": "float32",
+            "shape": [
+                17
+            ],
+            "names": [
+                "left_arm_shoulder_pan.pos",
+                "left_arm_shoulder_lift.pos",
+                "left_arm_elbow_flex.pos",
+                "left_arm_wrist_flex.pos",
+                "left_arm_wrist_roll.pos",
+                "left_arm_gripper.pos",
+                "right_arm_shoulder_pan.pos",
+                "right_arm_shoulder_lift.pos",
+                "right_arm_elbow_flex.pos",
+                "right_arm_wrist_flex.pos",
+                "right_arm_wrist_roll.pos",
+                "right_arm_gripper.pos",
+                "head_motor_1.pos",
+                "head_motor_2.pos",
+                "x.vel",
+                "y.vel",
+                "theta.vel"
+            ]
+        },
+        "observation.state": {
+            "dtype": "float32",
+            "shape": [
+                17
+            ],
+            "names": [
+                "left_arm_shoulder_pan.pos",
+                "left_arm_shoulder_lift.pos",
+                "left_arm_elbow_flex.pos",
+                "left_arm_wrist_flex.pos",
+                "left_arm_wrist_roll.pos",
+                "left_arm_gripper.pos",
+                "right_arm_shoulder_pan.pos",
+                "right_arm_shoulder_lift.pos",
+                "right_arm_elbow_flex.pos",
+                "right_arm_wrist_flex.pos",
+                "right_arm_wrist_roll.pos",
+                "right_arm_gripper.pos",
+                "head_motor_1.pos",
+                "head_motor_2.pos",
+                "x.vel",
+                "y.vel",
+                "theta.vel"
+            ]
+        },
+        "observation.images.camera_0": {
+            "dtype": "video",
+            "shape": [
+                480,
+                640,
+                3
+            ],
+            "names": [
+                "height",
+                "width",
+                "channels"
+            ]
+        },
+        "observation.images.camera_2": {
+            "dtype": "video",
+            "shape": [
+                480,
+                640,
+                3
+            ],
+            "names": [
+                "height",
+                "width",
+                "channels"
+            ]
+        },
+        "observation.images.head": {
+            "dtype": "video",
+            "shape": [
+                480,
+                640,
+                3
+            ],
+            "names": [
+                "height",
+                "width",
+                "channels"
+            ]
+        },
+        "timestamp": {
+            "dtype": "float32",
+            "shape": [
+                1
+            ],
+            "names": null
+        },
+        "frame_index": {
+            "dtype": "int64",
+            "shape": [
+                1
+            ],
+            "names": null
+        },
+        "episode_index": {
+            "dtype": "int64",
+            "shape": [
+                1
+            ],
+            "names": null
+        },
+        "index": {
+            "dtype": "int64",
+            "shape": [
+                1
+            ],
+            "names": null
+        },
+        "task_index": {
+            "dtype": "int64",
+            "shape": [
+                1
+            ],
+            "names": null
+        }
+    },
+    "total_episodes": 0,
+    "total_frames": 0,
+    "total_tasks": 0,
+    "chunks_size": 1000,
+    "data_files_size_in_mb": 100,
+    "video_files_size_in_mb": 200,
+    "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+    "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
+    "robot_type": "xlerobot_client",
+    "splits": {}
+}

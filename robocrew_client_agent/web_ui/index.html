@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双智臂 · 多模态双机械臂交互系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #071018;
+    --panel: rgba(8, 18, 30, 0.86);
+    --line: rgba(86, 214, 255, 0.28);
+    --cyan: #4de4ff;
+    --amber: #ffb45a;
+    --ice: #e8f7ff;
+    --muted: #8aa0b5;
+    --danger: #ff4d6d;
+    --ok: #3ee08a;
+    --text: #d7e8f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 480px at 8% -10%, rgba(77, 228, 255, 0.16), transparent 55%),
+      radial-gradient(1000px 420px at 96% -8%, rgba(255, 180, 90, 0.14), transparent 50%),
+      linear-gradient(180deg, #08131d 0%, #071018 42%, #050b12 100%);
+    padding: 16px 18px 188px;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(77, 228, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77, 228, 255, 0.045) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at 50% 0%, #000 20%, transparent 85%);
+    z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; }
+
+  .hud-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .mark {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .mark svg { width: 52px; height: 52px; display: block; }
+  .brand-copy .kicker {
+    font-family: Orbitron, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--cyan);
+    margin-bottom: 2px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.1;
+    background: linear-gradient(90deg, var(--cyan), #fff 46%, var(--amber));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .brand-copy p {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    background: rgba(6, 16, 28, 0.75);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 8px var(--danger);
+  }
+  .dot.on {
+    background: var(--ok);
+    box-shadow: 0 0 10px var(--ok);
+  }
+  #statusText {
+    font-family: Orbitron, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ice);
+  }
+
+  .panel {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+  }
+  .panel::before, .panel::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+  }
+  .panel::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid var(--cyan);
+    border-left: 2px solid var(--cyan);
+  }
+  .panel::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 2px solid var(--amber);
+    border-bottom: 2px solid var(--amber);
+  }
+  .panel h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--ice);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .panel h2 .idx {
+    font-family: Orbitron, sans-serif;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 0.18em;
+  }
+
+  .camera-dock {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    margin: 0 -18px 14px;
+    padding: 10px 18px 12px;
+    border-left: none;
+    border-right: none;
+    background: rgba(5, 12, 20, 0.94);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(16px);
+  }
+  .camera-dock::before, .camera-dock::after { display: none; }
+  .cameras { display: flex; gap: 10px; }
+  .cam { flex: 1; min-width: 0; text-align: center; }
+  .cam-frame {
+    position: relative;
+    padding: 4px;
+    background: #000;
+  }
+  .cam-frame::before, .cam-frame::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .cam-frame::before { top: 0; left: 0; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+  .cam-frame::after { right: 0; bottom: 0; border-right: 2px solid var(--amber); border-bottom: 2px solid var(--amber); }
+  .cam:nth-child(1) .cam-frame { box-shadow: inset 0 0 0 1px rgba(77, 228, 255, 0.35); }
+  .cam:nth-child(2) .cam-frame { box-shadow: inset 0 0 0 1px rgba(232, 247, 255, 0.28); }
+  .cam:nth-child(3) .cam-frame { box-shadow: inset 0 0 0 1px rgba(255, 180, 90, 0.4); }
+  .cam img {
+    width: 100%;
+    height: 122px;
+    object-fit: contain;
+    display: block;
+    background: #000;
+  }
+  .cam .label {
+    font-family: Orbitron, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .layout { display: flex; gap: 14px; flex-wrap: wrap; }
+  .left { flex: 1.15 1 320px; min-width: 280px; }
+  .right { flex: 0.95 1 320px; min-width: 300px; }
+
+  button {
+    background: linear-gradient(180deg, rgba(36, 74, 102, 0.95), rgba(18, 42, 64, 0.95));
+    color: var(--ice);
+    border: 1px solid rgba(77, 228, 255, 0.35);
+    border-radius: 2px;
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  button:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 16px rgba(77, 228, 255, 0.18);
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+  button.danger {
+    background: linear-gradient(180deg, #7a2438, #4a1422);
+    border-color: rgba(255, 77, 109, 0.65);
+    color: #ffe4ea;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+  button.danger:hover { box-shadow: 0 0 18px rgba(255, 77, 109, 0.28); }
+  button.on {
+    background: linear-gradient(180deg, #9a2a3c, #5a1624);
+    border-color: var(--danger);
+    box-shadow: 0 0 14px rgba(255, 77, 109, 0.25);
+  }
+  button.ghost {
+    background: transparent;
+    border-color: rgba(255, 180, 90, 0.4);
+  }
+  input[type=text], input[type=number], select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid rgba(77, 228, 255, 0.22);
+    background: rgba(3, 8, 14, 0.8);
+    color: var(--ice);
+    font-size: 14px;
+    border-radius: 2px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px rgba(77, 228, 255, 0.2);
+  }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .row > input, .row > select { flex: 1; }
+  .row > button { flex-shrink: 0; }
+  .lbl {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .num { width: 72px; flex: 0 0 72px !important; }
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 280px;
+  }
+  .pad button { min-height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; gap: 2px; }
+  .k { font-size: 10px; opacity: 0.55; letter-spacing: 0.04em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .joint-row button { flex: 0 0 48px; padding: 4px 0; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .pad .gap { visibility: hidden; }
+  .teleop { display: flex; gap: 18px; flex-wrap: wrap; }
+  .teleop-block { flex: 1; min-width: 240px; }
+  .teleop-block .hint { margin-bottom: 8px; margin-top: 0; }
+  [data-hold] { touch-action: none; user-select: none; }
+  .safety .row { margin-bottom: 0; }
+  .safety button { flex: 1; }
+  .motion-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(77, 228, 255, 0.1);
+  }
+  .motion-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mic-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .mic-meter {
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(77, 228, 255, 0.2);
+  }
+  .mic-meter i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--cyan), var(--ok));
+  }
+  #micName { margin-top: 0; }
+  .log-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 8px 18px 10px;
+    background: rgba(5, 12, 20, 0.96);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(16px);
+  }
+  .log-dock .panel {
+    max-width: 1440px;
+    margin: 0 auto 0;
+    padding: 10px 12px;
+  }
+  .log-dock .panel::before, .log-dock .panel::after { display: none; }
+  .log-dock h2 { margin-bottom: 6px; }
+  #log {
+    background: #04080d;
+    border: 1px solid rgba(77, 228, 255, 0.14);
+    padding: 8px 12px;
+    height: 118px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: #9fd7c2;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  #log .recog { color: var(--amber); }
+  #log .err { color: #ff8aa0; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .warn { color: var(--amber) !important; display: none; }
+  .arm-cols { display: flex; gap: 12px; }
+  .arm-col { flex: 1; padding: 8px; border: 1px solid rgba(77, 228, 255, 0.12); }
+  .arm-col h3 {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    margin-bottom: 8px;
+    font-family: Orbitron, sans-serif;
+  }
+  .arm-left { border-color: rgba(77, 228, 255, 0.35); }
+  .arm-left h3 { color: var(--cyan); }
+  .arm-right { border-color: rgba(255, 180, 90, 0.4); }
+  .arm-right h3 { color: var(--amber); }
+  .joint-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .joint-row span { flex: 1; font-size: 13px; }
+  a { color: var(--cyan); }
+  .split { height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 12px 0; }
+  @media (max-width: 720px) {
+    h1 { font-size: 22px; }
+    .cam img { height: 96px; }
+    .camera-dock { margin: 0 -16px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hud-top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 52 52" fill="none">
+          <rect x="1.5" y="1.5" width="49" height="49" stroke="url(#g)" stroke-width="1.4"/>
+          <path d="M16 34 L16 18 L12 22" stroke="#4de4ff" stroke-width="2" stroke-linecap="square"/>
+          <path d="M10 28 H22" stroke="#4de4ff" stroke-width="2"/>
+          <path d="M36 34 L36 18 L40 22" stroke="#ffb45a" stroke-width="2" stroke-linecap="square"/>
+          <path d="M30 28 H42" stroke="#ffb45a" stroke-width="2"/>
+          <circle cx="26" cy="26" r="3" stroke="#e8f7ff" stroke-width="1.4"/>
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="52" y2="52">
+              <stop stop-color="#4de4ff"/><stop offset="1" stop-color="#ffb45a"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div class="kicker">SHUANG ZHI BI</div>
+        <h1>双智臂</h1>
+        <p>多模态双机械臂交互系统</p>
+      </div>
+    </div>
+    <div class="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">连接中…</span>
+    </div>
+  </header>
+
+  <section class="panel camera-dock">
+    <h2><span class="idx">VISION</span> 视觉阵列</h2>
+    <div class="cameras" id="cameraRow">
+      <div class="cam"><div class="cam-frame"><img src="/api/camera/camera_0" alt="左臂摄像头"></div><div class="label">左臂摄像头</div></div>
+      <div class="cam"><div class="cam-frame"><img src="/api/camera/head" alt="中间摄像头"></div><div class="label">中间摄像头</div></div>
+      <div class="cam"><div class="cam-frame"><img src="/api/camera/camera_2" alt="右臂摄像头"></div><div class="label">右臂摄像头</div></div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <div class="left">
+      <section class="panel">
+        <h2><span class="idx">01</span> 多模态指令</h2>
+        <div class="row">
+          <button id="voiceBtn">开始录音</button>
+          <span class="lbl">时长(秒)</span>
+          <input type="number" id="voiceSeconds" class="num" value="5" min="1" max="30">
+          <button id="contBtn">连续监听</button>
+        </div>
+        <div class="hint" id="voiceHint">对着电脑麦克风说。看到「正在听」再开口；绿条跟着声音跳才说明麦在工作。</div>
+        <div class="row">
+          <span class="lbl">输入设备</span>
+          <select id="micDevice">
+            <option value="">点开始录音后列出麦克风</option>
+          </select>
+        </div>
+        <div class="mic-row">
+          <span class="lbl">麦</span>
+          <div class="mic-meter" aria-hidden="true"><i id="micLevel"></i></div>
+          <span class="hint" id="micName">未开麦</span>
+        </div>
+        <div class="split"></div>
+        <div class="row">
+          <input type="text" id="textInput" placeholder="语音或文字：向前走一点、播放动作11、看看前面有什么">
+          <button id="textBtn">发送</button>
+        </div>
+      </section>
+
+      <section class="panel safety">
+        <h2><span class="idx">02</span> 安全与扭矩</h2>
+        <div class="row">
+          <button data-action="release_torque">释放扭矩</button>
+          <button data-action="restore_torque">恢复扭矩</button>
+          <button data-action="stop" class="danger">急停</button>
+        </div>
+        <div class="hint">急停用来中止 AI / 播放 / 语音等跑偏的任务。底盘和转头请用下方按住遥控。</div>
+      </section>
+
+      <section class="panel">
+        <h2><span class="idx">03</span> 手动遥控</h2>
+        <div class="teleop">
+          <div class="teleop-block">
+            <div class="hint">底盘 · 按住持续移动 · 方向键 / , .</div>
+            <div class="pad">
+              <span class="gap"></span>
+              <button data-hold="forward">前进<span class="k">↑</span></button>
+              <span class="gap"></span>
+              <button data-hold="left">左移<span class="k">←</span></button>
+              <span class="gap"></span>
+              <button data-hold="right">右移<span class="k">→</span></button>
+              <span class="gap"></span>
+              <button data-hold="backward">后退<span class="k">↓</span></button>
+              <span class="gap"></span>
+              <button data-hold="turn_left">左转<span class="k">,</span></button>
+              <span class="gap"></span>
+              <button data-hold="turn_right">右转<span class="k">.</span></button>
+            </div>
+          </div>
+          <div class="teleop-block">
+            <div class="hint">头部 · 回正 Home · [ ] PgUp/PgDn</div>
+            <div class="pad">
+              <span class="gap"></span>
+              <button data-hold="look_up">抬头<span class="k">PgUp</span></button>
+              <span class="gap"></span>
+              <button data-hold="head_left">头左<span class="k">[</span></button>
+              <button data-action="head_center">回正<span class="k">Home</span></button>
+              <button data-hold="head_right">头右<span class="k">]</span></button>
+              <span class="gap"></span>
+              <button data-hold="look_down">低头<span class="k">PgDn</span></button>
+              <span class="gap"></span>
+            </div>
+          </div>
+        </div>
+        <div class="hint">键盘按住等同按钮；在输入框里打字不会抢键。</div>
+      </section>
+
+      <section class="panel">
+        <h2><span class="idx">04</span> 双臂关节</h2>
+        <div id="armControl"></div>
+        <div class="hint">左臂青色 / 右臂琥珀色。按住 +/- 或键盘持续微调，松开即停。左臂 QWERT Y / ASDFGH，右臂 UIOPN / JKL;'M。</div>
+      </section>
+    </div>
+
+    <div class="right">
+      <section class="panel">
+        <h2><span class="idx">05</span> 动作序列</h2>
+        <div id="motionList"></div>
+        <div class="split"></div>
+        <div class="hint">录制新动作</div>
+        <div class="row">
+          <input type="text" id="recordName" placeholder="动作名，例如 抓盒子">
+        </div>
+        <div class="row">
+          <select id="recordArm">
+            <option value="right">右臂</option>
+            <option value="left">左臂</option>
+            <option value="both" selected>双臂</option>
+          </select>
+          <span class="lbl">时长(秒)</span>
+          <input type="number" id="recordSeconds" class="num" value="10" min="1" max="60">
+          <button id="recordBtn">录制</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2><span class="idx">06</span> VR 沉浸控制</h2>
+        <div class="row">
+          <button id="vrBtn">启动 VR</button>
+          <button id="vrStopBtn" class="ghost">关闭 VR</button>
+        </div>
+        <div class="hint">启动后，在 Quest 头显浏览器打开 <span id="vrUrl">https://本机IP:8443</span>，点 Start Controller Tracking 后按住 Grip 控制机械臂。</div>
+        <div class="hint warn" id="armResetHint">VR 已退出，双臂扭矩已释放。请用手摆回安全位置，再点「恢复扭矩」。</div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<aside class="log-dock">
+  <section class="panel">
+    <h2><span class="idx">LOG</span> 系统日志</h2>
+    <div id="log"></div>
+  </section>
+</aside>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function log(msg, cls) {
+  const div = document.createElement("div");
+  if (cls) div.className = cls;
+  div.textContent = msg;
+  $("log").appendChild(div);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+let ttsPlaying = false;
+let ttsHeard = false;
+let lastSpoken = "";
+const kbHeld = new Set();
+
+function playAudio(b64, spoken) {
+  return new Promise((resolve) => {
+    if (spoken) lastSpoken = String(spoken);
+    if (!b64) {
+      resolve();
+      return;
+    }
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      ttsPlaying = false;
+      setTimeout(resolve, 500);
+    };
+    try {
+      const audio = new Audio("data:audio/mpeg;base64," + b64);
+      ttsPlaying = true;
+      ttsHeard = true;
+      audio.onended = done;
+      audio.onerror = done;
+      audio.play().catch(done);
+      setTimeout(done, 45000);
+    } catch (e) {
+      ttsPlaying = false;
+      resolve();
+    }
+  });
+}
+
+async function postJSON(url, body) {
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return resp.json();
+}
+
+function setControlsLocked(locked) {
+  document.querySelectorAll("[data-action]").forEach((b) => {
+    if (b.dataset.action === "stop") return;
+    b.disabled = locked;
+  });
+  document.querySelectorAll("[data-hold]").forEach((b) => { b.disabled = locked; });
+  if (locked) releaseAllKeyboard();
+  document.querySelectorAll("#motionList button").forEach((b) => { b.disabled = locked; });
+  ["textInput", "textBtn", "voiceBtn", "contBtn", "recordName", "recordArm", "recordSeconds", "recordBtn"].forEach((id) => {
+    const el = $(id);
+    if (el) el.disabled = locked;
+  });
+  if (locked) {
+    $("statusText").textContent = "VR 控制中（网页控制已锁定）";
+  }
+}
+
+async function refreshStatus() {
+  try {
+    const r = await fetch("/api/status");
+    const s = await r.json();
+    $("statusDot").classList.toggle("on", !!s.connected);
+    if (s.vr_url) $("vrUrl").textContent = s.vr_url;
+    if (s.cameras && s.cameras.length && !$("cameraRow").dataset.ready) {
+      $("cameraRow").dataset.ready = "1";
+      $("cameraRow").innerHTML = s.cameras.map((c) => (
+        '<div class="cam"><div class="cam-frame"><img src="/api/camera/' + c.key + '" alt="' + c.label + '"></div><div class="label">' + c.label + "</div></div>"
+      )).join("");
+    }
+    const hint = $("armResetHint");
+    if (hint) hint.style.display = s.need_arm_reset ? "block" : "none";
+    if (s.vr_active) {
+      $("statusText").textContent = "VR 控制中（网页控制已锁定）";
+    } else {
+      $("statusText").textContent = s.connected ? "已连接 " + s.robot_ip : "未连接";
+    }
+    setControlsLocked(!!s.vr_active);
+  } catch (e) {
+    $("statusText").textContent = "状态获取失败";
+  }
+}
+setInterval(refreshStatus, 3000);
+refreshStatus();
+
+$("textBtn").onclick = async () => {
+  const text = $("textInput").value.trim();
+  if (!text) return;
+  $("textInput").value = "";
+  log("> " + text);
+  if (/^录制/.test(text.replace(/\s/g, ""))) {
+    log("开始录制，请掰动机械臂。结束后会告诉你有没有录到。");
+  } else if (/^(播放|执行动作)/.test(text.replace(/\s/g, ""))) {
+    log("正在查找并播放动作，机械臂应马上动起来。");
+  }
+  $("textBtn").disabled = true;
+  try {
+    const r = await postJSON("/api/text", { text });
+    log(r.result || r.error);
+    await playAudio(r.audio, r.result);
+    if (/^录制/.test(text.replace(/\s/g, ""))) loadMotions();
+  } finally {
+    $("textBtn").disabled = false;
+    $("textInput").focus();
+  }
+};
+$("textInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("textBtn").click();
+});
+
+document.querySelectorAll("[data-action]").forEach((btn) => {
+  btn.onclick = async () => {
+    const action = btn.dataset.action;
+    if (action === "stop") {
+      releaseAllKeyboard();
+      postJSON("/api/action", { action }).then((r) => log(r.result || r.error)).catch(() => {});
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const r = await postJSON("/api/action", { action });
+      log(r.result || r.error);
+      await playAudio(r.audio, r.result);
+      refreshStatus();
+    } finally {
+      btn.disabled = false;
+    }
+  };
+});
+
+function bindHold(btn) {
+  const action = btn.dataset.hold;
+  let down = false;
+  const press = () => {
+    if (down) return;
+    down = true;
+    postJSON("/api/teleop/press", { action }).then(() => {
+      if (!down) postJSON("/api/teleop/release", { action }).catch(() => {});
+    }).catch(() => { down = false; });
+  };
+  const release = () => {
+    if (!down) return;
+    down = false;
+    postJSON("/api/teleop/release", { action }).catch(() => {});
+  };
+  btn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    btn.setPointerCapture(e.pointerId);
+    press();
+  });
+  btn.addEventListener("pointerup", release);
+  btn.addEventListener("pointercancel", release);
+  btn.addEventListener("lostpointercapture", release);
+}
+document.querySelectorAll("[data-hold]").forEach(bindHold);
+
+const ARM_JOINTS = [
+  ["shoulder_pan", "肩部水平"],
+  ["shoulder_lift", "肩部抬升"],
+  ["elbow_flex", "肘部弯曲"],
+  ["wrist_flex", "腕部弯曲"],
+  ["wrist_roll", "腕部旋转"],
+  ["gripper", "夹爪"],
+];
+const ARM_JOINT_KEYS = {
+  left: {
+    shoulder_pan: ["Q", "A"],
+    shoulder_lift: ["W", "S"],
+    elbow_flex: ["E", "D"],
+    wrist_flex: ["R", "F"],
+    wrist_roll: ["T", "G"],
+    gripper: ["Y", "H"],
+  },
+  right: {
+    shoulder_pan: ["U", "J"],
+    shoulder_lift: ["I", "K"],
+    elbow_flex: ["O", "L"],
+    wrist_flex: ["P", ";"],
+    wrist_roll: ["'", '"'],
+    gripper: ["N", "M"],
+  },
+};
+(function buildArmControl() {
+  const container = $("armControl");
+  const cols = document.createElement("div");
+  cols.className = "arm-cols";
+  for (const [side, title] of [["left", "左臂"], ["right", "右臂"]]) {
+    const col = document.createElement("div");
+    col.className = "arm-col arm-" + side;
+    const h = document.createElement("h3");
+    h.textContent = title;
+    col.appendChild(h);
+    for (const [joint, label] of ARM_JOINTS) {
+      const row = document.createElement("div");
+      row.className = "joint-row";
+      const span = document.createElement("span");
+      span.textContent = label;
+      const keys = (ARM_JOINT_KEYS[side] && ARM_JOINT_KEYS[side][joint]) || ["", ""];
+      const minus = document.createElement("button");
+      minus.innerHTML = "−<span class=\"k\"></span>";
+      minus.querySelector(".k").textContent = keys[1];
+      minus.dataset.hold = side + "_" + joint + "_minus";
+      const plus = document.createElement("button");
+      plus.innerHTML = "+<span class=\"k\"></span>";
+      plus.querySelector(".k").textContent = keys[0];
+      plus.dataset.hold = side + "_" + joint + "_plus";
+      row.appendChild(span);
+      row.appendChild(minus);
+      row.appendChild(plus);
+      col.appendChild(row);
+    }
+    cols.appendChild(col);
+  }
+  container.appendChild(cols);
+  container.querySelectorAll("[data-hold]").forEach(bindHold);
+})();
+
+const KEY_HOLD = {
+  ArrowUp: "forward",
+  ArrowDown: "backward",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  Comma: "turn_left",
+  Period: "turn_right",
+  BracketLeft: "head_left",
+  BracketRight: "head_right",
+  PageUp: "look_up",
+  PageDown: "look_down",
+  KeyQ: "left_shoulder_pan_plus",
+  KeyA: "left_shoulder_pan_minus",
+  KeyW: "left_shoulder_lift_plus",
+  KeyS: "left_shoulder_lift_minus",
+  KeyE: "left_elbow_flex_plus",
+  KeyD: "left_elbow_flex_minus",
+  KeyR: "left_wrist_flex_plus",
+  KeyF: "left_wrist_flex_minus",
+  KeyT: "left_wrist_roll_plus",
+  KeyG: "left_wrist_roll_minus",
+  KeyY: "left_gripper_plus",
+  KeyH: "left_gripper_minus",
+  KeyU: "right_shoulder_pan_plus",
+  KeyJ: "right_shoulder_pan_minus",
+  KeyI: "right_shoulder_lift_plus",
+  KeyK: "right_shoulder_lift_minus",
+  KeyO: "right_elbow_flex_plus",
+  KeyL: "right_elbow_flex_minus",
+  KeyP: "right_wrist_flex_plus",
+  Semicolon: "right_wrist_flex_minus",
+  KeyN: "right_gripper_plus",
+  KeyM: "right_gripper_minus",
+};
+
+function typingInField(el) {
+  return !!(el && el.closest && el.closest("input, textarea, select, [contenteditable='true']"));
+}
+
+function holdActionFromEvent(e) {
+  if (e.code === "Quote") {
+    return e.shiftKey ? "right_wrist_roll_minus" : "right_wrist_roll_plus";
+  }
+  return KEY_HOLD[e.code] || null;
+}
+
+function actionsForCode(code) {
+  if (code === "Quote") return ["right_wrist_roll_plus", "right_wrist_roll_minus"];
+  const action = KEY_HOLD[code];
+  return action ? [action] : [];
+}
+
+function setHoldButtonActive(action, on) {
+  document.querySelectorAll('[data-hold="' + action + '"]').forEach((btn) => {
+    btn.classList.toggle("on", on);
+  });
+}
+
+function keyboardPress(action) {
+  if (!action || kbHeld.has(action)) return;
+  kbHeld.add(action);
+  setHoldButtonActive(action, true);
+  postJSON("/api/teleop/press", { action }).catch(() => {
+    kbHeld.delete(action);
+    setHoldButtonActive(action, false);
+  });
+}
+
+function keyboardRelease(action) {
+  if (!action || !kbHeld.has(action)) return;
+  kbHeld.delete(action);
+  setHoldButtonActive(action, false);
+  postJSON("/api/teleop/release", { action }).catch(() => {});
+}
+
+function releaseAllKeyboard() {
+  [...kbHeld].forEach(keyboardRelease);
+}
+
+function controlsAreLocked() {
+  const sample = document.querySelector("[data-hold]");
+  return !!(sample && sample.disabled);
+}
+
+window.addEventListener("keydown", (e) => {
+  if (typingInField(e.target) || controlsAreLocked()) return;
+  if (e.code === "Home") {
+    if (e.repeat) return;
+    e.preventDefault();
+    postJSON("/api/action", { action: "head_center" }).then((r) => {
+      if (r && (r.result || r.error)) log(r.result || r.error);
+    }).catch(() => {});
+    return;
+  }
+  const action = holdActionFromEvent(e);
+  if (!action) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  keyboardPress(action);
+});
+
+window.addEventListener("keyup", (e) => {
+  actionsForCode(e.code).forEach(keyboardRelease);
+});
+
+window.addEventListener("blur", releaseAllKeyboard);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) releaseAllKeyboard();
+});
+
+$("vrBtn").onclick = async () => {
+  $("vrBtn").disabled = true;
+  $("vrBtn").textContent = "启动中…";
+  try {
+    const r = await postJSON("/api/vr/start", {});
+    log(r.result || r.error || "已发送启动请求");
+    if (r.vr_url) $("vrUrl").textContent = r.vr_url;
+    await playAudio(r.audio, r.result);
+    refreshStatus();
+  } finally {
+    $("vrBtn").disabled = false;
+    $("vrBtn").textContent = "启动 VR";
+  }
+};
+
+$("vrStopBtn").onclick = async () => {
+  $("vrStopBtn").disabled = true;
+  try {
+    const r = await postJSON("/api/vr/stop", {});
+    log(r.result || r.error);
+    await playAudio(r.audio, r.result);
+    refreshStatus();
+  } finally {
+    $("vrStopBtn").disabled = false;
+  }
+};
+
+let liveStream = null;
+let currentRecorder = null;
+let recording = false;
+let continuous = false;
+let micBlocked = false;
+let micMeterStop = null;
+let peakMic = 0;
+let preferredMicId = "";
+const defaultVoiceHint = "对着电脑麦克风说。看到「正在听」再开口；绿条跟着声音跳才说明麦在工作。不要选带 Monitor 的设备。";
+
+function isMonitorLabel(label) {
+  const s = String(label || "").toLowerCase();
+  return (
+    s.includes("monitor of") ||
+    s.startsWith("monitor ") ||
+    s.includes("loopback") ||
+    s.includes("stereo mix") ||
+    s.includes("what u hear") ||
+    s.includes("wave out")
+  );
+}
+
+function scoreMicLabel(label) {
+  const s = String(label || "").toLowerCase();
+  if (isMonitorLabel(s)) return -100;
+  let score = 1;
+  if (s.includes("usb")) score += 5;
+  if (s.includes("headset") || s.includes("headphone")) score += 4;
+  if (s.includes("webcam") || s.includes("camera")) score += 3;
+  if (s.includes("microphone") || /\bmic\b/.test(s) || s.includes("麦克风")) score += 3;
+  if (s.includes("internal") || s.includes("built-in")) score += 2;
+  return score;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function setListenState(text) {
+  const hint = $("voiceHint");
+  if (hint) hint.textContent = text || defaultVoiceHint;
+}
+
+function startMicMeter(stream) {
+  stopMicMeter();
+  peakMic = 0;
+  const track = stream.getAudioTracks()[0];
+  const nameEl = $("micName");
+  if (nameEl) nameEl.textContent = (track && track.label) ? track.label : "已开麦";
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  const ctx = new AudioCtx();
+  const src = ctx.createMediaStreamSource(stream);
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 512;
+  src.connect(analyser);
+  const data = new Uint8Array(analyser.fftSize);
+  let raf = 0;
+  const tick = () => {
+    analyser.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / data.length);
+    if (rms > peakMic) peakMic = rms;
+    const bar = $("micLevel");
+    if (bar) bar.style.width = Math.min(100, Math.round(rms * 320)) + "%";
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+  micMeterStop = () => {
+    cancelAnimationFrame(raf);
+    ctx.close().catch(() => {});
+    micMeterStop = null;
+  };
+}
+
+function stopMicMeter() {
+  if (micMeterStop) micMeterStop();
+  const bar = $("micLevel");
+  if (bar) bar.style.width = "0%";
+}
+
+async function listMicDevices() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((d) => d.kind === "audioinput");
+}
+
+async function refreshMicOptions(selectedId) {
+  const sel = $("micDevice");
+  if (!sel) return;
+  const inputs = await listMicDevices();
+  const keep = sel.value;
+  sel.innerHTML = "";
+  if (!inputs.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "没有发现音频输入设备";
+    sel.appendChild(opt);
+    return;
+  }
+  const hasReal = inputs.some((d) => d.label && !isMonitorLabel(d.label));
+  inputs.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d.deviceId;
+    const monitor = isMonitorLabel(d.label);
+    opt.textContent = (d.label || "音频输入") + (monitor ? "（扬声器监听，不要选）" : "");
+    if (monitor && hasReal) opt.disabled = true;
+    sel.appendChild(opt);
+  });
+  const pick = selectedId || preferredMicId || keep;
+  if (pick && [...sel.options].some((o) => o.value === pick && !o.disabled)) {
+    sel.value = pick;
+  } else {
+    const real = inputs.filter((d) => !isMonitorLabel(d.label));
+    const pool = real.length ? real : inputs;
+    pool.sort((a, b) => scoreMicLabel(b.label) - scoreMicLabel(a.label));
+    if (pool[0]) sel.value = pool[0].deviceId;
+  }
+  preferredMicId = sel.value;
+}
+
+async function openMicStream() {
+  stopLiveStream();
+  const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+  probe.getTracks().forEach((t) => t.stop());
+  await refreshMicOptions();
+  const deviceId = $("micDevice") ? $("micDevice").value : preferredMicId;
+  const audio = {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+    channelCount: 1,
+  };
+  if (deviceId) audio.deviceId = { exact: deviceId };
+  liveStream = await navigator.mediaDevices.getUserMedia({ audio });
+  await refreshMicOptions(deviceId);
+  const label = liveStream.getAudioTracks()[0] && liveStream.getAudioTracks()[0].label;
+  if (isMonitorLabel(label)) {
+    log("当前仍是扬声器监听（Monitor），不是麦克风。请在「输入设备」里换成不带 Monitor 的那一项。", "err");
+  } else {
+    log("已打开麦克风：" + (label || "未知设备") + "。请对着它说话，绿条应会跳。");
+  }
+  startMicMeter(liveStream);
+  preferredMicId = deviceId;
+  return liveStream;
+}
+
+async function getLiveStream() {
+  if (liveStream && liveStream.getTracks().some((t) => t.readyState === "live")) {
+    const label = liveStream.getAudioTracks()[0] && liveStream.getAudioTracks()[0].label;
+    if (!isMonitorLabel(label)) return liveStream;
+    log("检测到开着的是扬声器监听，正在改用真正的麦克风…");
+  }
+  return openMicStream();
+}
+
+function stopLiveStream() {
+  stopMicMeter();
+  if (!liveStream) return;
+  liveStream.getTracks().forEach((t) => t.stop());
+  liveStream = null;
+  const nameEl = $("micName");
+  if (nameEl) nameEl.textContent = "未开麦";
+}
+
+async function recordClip(seconds) {
+  const stream = await getLiveStream();
+  const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? "audio/webm;codecs=opus"
+    : (MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "");
+  ttsHeard = false;
+  peakMic = 0;
+  return new Promise((resolve) => {
+    const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    const chunks = [];
+    currentRecorder = rec;
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onerror = () => resolve(new Blob());
+    rec.onstop = () => {
+      if (currentRecorder === rec) currentRecorder = null;
+      resolve(new Blob(chunks, { type: mime || "audio/webm" }));
+    };
+    rec.start(200);
+    setTimeout(() => {
+      if (rec.state === "recording") rec.stop();
+    }, seconds * 1000);
+  });
+}
+
+async function recognizeBlob(blob, fromContinuous) {
+  const kb = blob ? Math.round(blob.size / 1024) : 0;
+  log("本段录音 " + kb + " KB，音量峰值 " + peakMic.toFixed(3) + (peakMic < 0.02 ? "（太小，麦可能没拾到）" : ""));
+  if (!blob || blob.size < 400 || peakMic < 0.015) {
+    const tip = "麦克风几乎没录到声音。请看浏览器是否允许麦克风，地址栏锁图标里有没有选对输入设备。";
+    if (!fromContinuous) log(tip, "err");
+    else setListenState("这轮没听到声音，继续听…");
+    return;
+  }
+  if (fromContinuous) setListenState("正在识别…");
+  const fd = new FormData();
+  fd.append("file", blob, "voice.webm");
+  try {
+    const resp = await fetch("/api/voice", { method: "POST", body: fd });
+    const r = await resp.json();
+    if (!r.ok) {
+      log(r.error || "语音识别失败", "err");
+      return;
+    }
+    if (r.ignored || !r.task) {
+      if (!fromContinuous) log("听到声音了，但没识别出内容。请再说清楚一点。");
+      else setListenState("这轮没听清，继续听，请再说一次…");
+      return;
+    }
+    log("识别：" + r.task, "recog");
+    if (r.result) log(r.result);
+    await playAudio(r.audio, r.result);
+  } catch (e) {
+    log("上传失败：" + e, "err");
+  }
+}
+
+function markMicBlocked() {
+  micBlocked = true;
+  recording = false;
+  continuous = false;
+  stopLiveStream();
+  const voiceBtn = $("voiceBtn");
+  const contBtn = $("contBtn");
+  if (voiceBtn) {
+    voiceBtn.disabled = true;
+    voiceBtn.textContent = "无麦克风";
+  }
+  if (contBtn) {
+    contBtn.disabled = true;
+    contBtn.classList.remove("on");
+    contBtn.textContent = "连续监听";
+  }
+}
+
+if ($("micDevice")) {
+  $("micDevice").onchange = async () => {
+    preferredMicId = $("micDevice").value;
+    if (recording || continuous || liveStream) {
+      try {
+        await openMicStream();
+      } catch (e) {
+        log("切换麦克风失败：" + e, "err");
+      }
+    }
+  };
+}
+
+$("voiceBtn").onclick = async () => {
+  if (micBlocked) { log("这个浏览器没有麦克风，请用文字命令或快捷按钮。", "err"); return; }
+  if (continuous) {
+    log("已经在连续监听，直接对着麦克风说即可，不用再点「开始录音」。");
+    return;
+  }
+  if (recording || ttsPlaying) return;
+  recording = true;
+  $("voiceBtn").disabled = true;
+  $("voiceBtn").textContent = "正在听…";
+  const seconds = Math.max(1, Math.min(30, Number($("voiceSeconds").value) || 5));
+  try {
+    setListenState("正在听 " + seconds + " 秒，请现在说话…");
+    const blob = await recordClip(seconds);
+    $("voiceBtn").textContent = "识别中…";
+    setListenState("正在识别…");
+    await recognizeBlob(blob, false);
+  } catch (e) {
+    log("麦克风不可用：" + e, "err");
+    markMicBlocked();
+  } finally {
+    if (!continuous) stopLiveStream();
+    recording = false;
+    if (!micBlocked) {
+      $("voiceBtn").disabled = false;
+      $("voiceBtn").textContent = "开始录音";
+    }
+    setListenState("");
+  }
+};
+
+$("contBtn").onclick = () => {
+  if (micBlocked) { log("这个浏览器没有麦克风，请用文字命令或快捷按钮。", "err"); return; }
+  continuous = !continuous;
+  $("contBtn").classList.toggle("on", continuous);
+  $("contBtn").textContent = continuous ? "停止监听" : "连续监听";
+  if (continuous) {
+    if ($("voiceBtn")) $("voiceBtn").disabled = true;
+    log("进入连续监听。看到「正在听」时再说。文字仍可随时发送。", "recog");
+    contLoop();
+  } else {
+    if (currentRecorder && currentRecorder.state === "recording") currentRecorder.stop();
+    stopLiveStream();
+    if ($("voiceBtn") && !micBlocked) $("voiceBtn").disabled = false;
+    setListenState("已停止监听。");
+  }
+};
+
+async function contLoop() {
+  const seconds = Math.max(1, Math.min(30, Number($("voiceSeconds").value) || 5));
+  while (continuous) {
+    if (ttsPlaying) {
+      setListenState("播报中，等我说完再听…");
+      await sleep(200);
+      continue;
+    }
+    try {
+      setListenState("正在听，请现在说话…");
+      const blob = await recordClip(seconds);
+      if (!continuous) break;
+      if (ttsHeard || ttsPlaying) continue;
+      recognizeBlob(blob, true);
+    } catch (e) {
+      log("麦克风不可用：" + e, "err");
+      markMicBlocked();
+      break;
+    }
+  }
+  if (!continuous) stopLiveStream();
+}
+
+async function loadMotions() {
+  try {
+    const r = await fetch("/api/motions");
+    const d = await r.json();
+    const list = $("motionList");
+    list.innerHTML = "";
+    if (!d.motions || !d.motions.length) {
+      list.innerHTML = '<div class="hint">暂无已录动作</div>';
+      return;
+    }
+    d.motions.forEach((name) => {
+      const item = document.createElement("div");
+      item.className = "motion-item";
+      const span = document.createElement("span");
+      span.textContent = name;
+      const play = document.createElement("button");
+      play.textContent = "播放";
+      play.onclick = async () => {
+        play.disabled = true;
+        try {
+          const r = await postJSON("/api/motions/play", { name });
+          log(r.result || r.error);
+          await playAudio(r.audio, r.result);
+        } finally {
+          play.disabled = false;
+        }
+      };
+      const del = document.createElement("button");
+      del.textContent = "删除";
+      del.className = "danger";
+      del.onclick = async () => {
+        if (!confirm("确定删除动作「" + name + "」？删除后无法恢复。")) return;
+        del.disabled = true;
+        try {
+          const r = await postJSON("/api/motions/delete", { name });
+          log(r.result || r.error, r.ok ? "" : "err");
+          if (r.ok) loadMotions();
+        } finally {
+          del.disabled = false;
+        }
+      };
+      item.appendChild(span);
+      item.appendChild(play);
+      item.appendChild(del);
+      list.appendChild(item);
+    });
+  } catch (e) {
+    log("加载动作失败：" + e, "err");
+  }
+}
+loadMotions();
+
+$("recordBtn").onclick = async () => {
+  const name = $("recordName").value.trim();
+  if (!name) { log("请先填动作名", "err"); return; }
+  const armSide = $("recordArm").value;
+  const seconds = Math.max(1, Math.min(60, Number($("recordSeconds").value) || 10));
+  $("recordBtn").disabled = true;
+  $("recordBtn").textContent = "录制中…";
+  log("开始录制「" + name + "」(" + armSide + "，约" + seconds + "秒)，请掰动机械臂…");
+  try {
+    const r = await postJSON("/api/motions/record", { name, arm_side: armSide, seconds });
+    log(r.result || r.error);
+    await playAudio(r.audio, r.result);
+    loadMotions();
+  } finally {
+    $("recordBtn").disabled = false;
+    $("recordBtn").textContent = "录制";
+  }
+};
+</script>
+</body>
+</html>

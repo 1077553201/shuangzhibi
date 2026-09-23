@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XLeRobot Web Control</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>XLeRobot 控制台</h1>
+        <p id="statusText">正在连接...</p>
+      </div>
+      <button id="abortBtn" class="danger">停止本轮</button>
+    </header>
+
+    <main>
+      <section class="panel command-panel">
+        <h2>文字 / 语音任务</h2>
+        <div class="task-row">
+          <input id="taskInput" placeholder="输入任务，例如：抬头、抓盒子、看看前面有什么" />
+          <button id="sendTaskBtn">执行</button>
+        </div>
+
+        <div class="voice-row">
+          <button id="recordBtn">开始录音</button>
+          <button id="rerecordBtn" disabled>重录</button>
+          <button id="runVoiceBtn" disabled>执行识别结果</button>
+          <button id="discardVoiceBtn" disabled>丢弃</button>
+        </div>
+        <textarea id="voiceText" placeholder="语音识别结果会出现在这里，可手动修改后执行"></textarea>
+
+        <div class="continuous-row">
+          <button id="continuousBtn">连续监听：关</button>
+          <span>连续监听会录音、识别、短暂停顿后自动执行。说错时点“重录”或“丢弃”。</span>
+        </div>
+      </section>
+
+      <section class="panel motion-panel">
+        <h2>动作序列</h2>
+        <div class="record-form">
+          <input id="motionName" placeholder="动作名，例如：抓盒子" />
+          <select id="armSide">
+            <option value="right">右臂</option>
+            <option value="left">左臂</option>
+            <option value="both">双臂</option>
+          </select>
+          <input id="recordSeconds" type="number" min="1" max="30" value="5" />
+          <button id="recordMotionBtn">录制</button>
+        </div>
+        <div id="motionList" class="motion-list"></div>
+      </section>
+
+      <section class="panel camera-panel">
+        <h2>摄像头预览</h2>
+        <div class="camera-actions">
+          <button id="refreshCameraBtn">刷新画面</button>
+        </div>
+        <img id="cameraPreview" alt="camera preview" />
+      </section>
+
+      <section class="panel result-panel">
+        <h2>结果</h2>
+        <pre id="lastResult"></pre>
+      </section>
+    </main>
+
+    <section class="logs">
+      <div class="logs-header">
+        <h2>运行日志</h2>
+        <button id="clearLogsBtn">清空显示</button>
+      </div>
+      <pre id="logBox"></pre>
+    </section>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

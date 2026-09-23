@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# 备份
+*.bak
+*.bak_*
+*——01*
+*~
+*.swp
+
+# 日志与产物
+*.log
+logs/
+outputs/
+last_camera_preview.jpg
+
+# 环境与密钥
+.env
+*.key
+*.pem
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 大文件
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
