@@ -35,3 +35,10 @@ Thumbs.db
 *.pt
 *.pth
 *.onnx
+
+# 环境（补充）
+envs/
+
+# IDE
+.idea/
+.vscode/
